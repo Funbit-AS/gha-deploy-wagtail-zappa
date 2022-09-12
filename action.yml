@@ -8,6 +8,15 @@ inputs:
   deployment-target:
     description: "production or staging"
     required: True
+  aws-access-key-id:
+    description: ""
+    required: True
+  aws-secret-access-key:
+    description: ""
+    required: True
+  django-secret-key:
+    description: ""
+    required: True
   uses-tailwind:
     description: "Does the project use Tailwind"
     required: True
@@ -34,23 +43,24 @@ runs:
       if: elm-paths!=''
       uses: Funbit-AS/gha-compile-elm@v1
       with:
-        elm-paths: ${{ input.elm-paths }}
-        elm-version: ${{ input.elm-version }}
+        elm-paths: ${{ inputs.elm-paths }}
+        elm-version: ${{ inputs.elm-version }}
       env:
         GITHUB_WORKSPACE: ${{ github.workspace }}
 
     - name: Tailwind - Install and Compile Production
       if: uses-tailwind
       run: |
-        cd wagtail/${{ input.project-name }}/theme/static_src
+        cd wagtail/${{ inputs.project-name }}/theme/static_src
         npm install
         npx tailwindcss --postcss -i ./src/styles.css -o ../static/css/dist/styles.css --minify
+      shell: bash
   
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: eu-central-1
       
     - uses: actions/setup-python@v3
@@ -66,21 +76,25 @@ runs:
         python -m venv env
         source env/bin/activate
         pip --disable-pip-version-check install -r requirements/production.txt
+      shell: bash
         
     - name: Collectstatic
       env:
-        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        DJANGO_SECRET_KEY: ${{ inputs.django-secret-key }}
       run: |
         source env/bin/activate
-        python manage.py collectstatic --noinput --settings=${{ input.PROJECT_NAME }}.settings.${{ input.DEPLOYMENT_TARGET }}
+        python manage.py collectstatic --noinput --settings=${{ inputs.PROJECT_NAME }}.settings.${{ inputs.DEPLOYMENT_TARGET }}
+      shell: bash
           
     - name: Update site with Zappa
       run: |
         source env/bin/activate
-        zappa update ${{ input.DEPLOYMENT_TARGET }}
+        zappa update ${{ inputs.DEPLOYMENT_TARGET }}
+      shell: bash
       
     - name: Migrate database
       if: success() || failure()
       run: |
         source env/bin/activate
-        zappa manage ${{ input.DEPLOYMENT_TARGET }} migrate
+        zappa manage ${{ inputs.DEPLOYMENT_TARGET }} migrate
+      shell: bash
