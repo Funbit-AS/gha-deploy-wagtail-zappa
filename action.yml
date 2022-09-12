@@ -1,0 +1,86 @@
+name: "Deploy with Zappa"
+description: "Deploys a Wagtail project using Zappa"
+
+inputs:
+  project-name:
+    description: "Name of project"
+    required: True
+  deployment-target:
+    description: "production or staging"
+    required: True
+  uses-tailwind:
+    description: "Does the project use Tailwind"
+    required: True
+  elm-paths:
+    description: "All paths to elm files ( '/wagtail/{{ project-name }}/{{ folder }}/elm' ) in project seperated by whitespace"
+    required: True
+    default: ""
+  elm-version:
+    description: "The version of Elm to be used to compile the elm files in the project"
+    required: false
+    default: 0.19.1
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      if: uses-tailwind || elm-paths!=''
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+    
+    - name:  Install and Compile Production Elm
+      if: elm-paths!=''
+      uses: Funbit-AS/gha-compile-elm@v1
+      with:
+        elm-paths: ${{ input.elm-paths }}
+        elm-version: ${{ input.elm-version }}
+      env:
+        GITHUB_WORKSPACE: ${{ github.workspace }}
+
+    - name: Tailwind - Install and Compile Production
+      if: uses-tailwind
+      run: |
+        cd wagtail/${{ input.project-name }}/theme/static_src
+        npm install
+        npx tailwindcss --postcss -i ./src/styles.css -o ../static/css/dist/styles.css --minify
+  
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-central-1
+      
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+        cache: "pip"
+        cache-dependency-path: |
+          **/requirements/common.txt
+          **/requirements/production.txt
+        
+    - name: Setup Python Virtual env
+      run: |
+        python -m venv env
+        source env/bin/activate
+        pip --disable-pip-version-check install -r requirements/production.txt
+        
+    - name: Collectstatic
+      env:
+        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      run: |
+        source env/bin/activate
+        python manage.py collectstatic --noinput --settings=${{ input.PROJECT_NAME }}.settings.${{ input.DEPLOYMENT_TARGET }}
+          
+    - name: Update site with Zappa
+      run: |
+        source env/bin/activate
+        zappa update ${{ input.DEPLOYMENT_TARGET }}
+      
+    - name: Migrate database
+      if: success() || failure()
+      run: |
+        source env/bin/activate
+        zappa manage ${{ input.DEPLOYMENT_TARGET }} migrate
