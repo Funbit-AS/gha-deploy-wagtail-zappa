@@ -47,8 +47,6 @@ runs:
         github-workspace: ${{ github.workspace }}
         elm-paths: ${{ inputs.elm-paths }}
         elm-version: ${{ inputs.elm-version }}
-      env:
-        GITHUB_WORKSPACE: ${{ github.workspace }}
 
     - name: Tailwind - Install and Compile Production
       if: uses-tailwind
