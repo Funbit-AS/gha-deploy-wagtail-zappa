@@ -44,6 +44,7 @@ runs:
       if: elm-paths!=''
       uses: Funbit-AS/gha-compile-elm@v1
       with:
+        github-workspace: ${{ github.workspace }}
         elm-paths: ${{ inputs.elm-paths }}
         elm-version: ${{ inputs.elm-version }}
       env:
