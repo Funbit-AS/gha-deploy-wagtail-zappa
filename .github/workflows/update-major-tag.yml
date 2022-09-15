@@ -9,7 +9,6 @@ jobs:
     steps:
       - name: Update
         run: |
-          version=${{ github.ref:11:1 }}
-          echo "Major version number: "$version
-          git tag -f v$version
+          #Needs to be changed if the major version number changes.
+          git tag -f v1
           git push origin v$version
