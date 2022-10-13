@@ -35,7 +35,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Node
-      if: uses-tailwind || elm-paths!=''
+      if: inputs.uses-tailwind!='false' || elm-paths!=''
       uses: actions/setup-node@v3
       with:
         node-version: '16'
@@ -49,7 +49,7 @@ runs:
         elm-version: ${{ inputs.elm-version }}
 
     - name: Tailwind - Install and Compile Production
-      if: uses-tailwind
+      if: inputs.uses-tailwind!='false'
       run: |
         cd wagtail/${{ inputs.project-name }}/theme/static_src
         npm install
