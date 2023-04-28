@@ -73,6 +73,7 @@ runs:
         
     - name: Setup Python Virtual env
       run: |
+        cd wagtail/${{ inputs.project-name }}
         python -m venv env
         source env/bin/activate
         pip --disable-pip-version-check install -r requirements/production.txt
@@ -82,12 +83,14 @@ runs:
       env:
         DJANGO_SECRET_KEY: ${{ inputs.django-secret-key }}
       run: |
+        cd wagtail/${{ inputs.project-name }}
         source env/bin/activate
         python manage.py collectstatic --noinput --settings=${{ inputs.project-name }}.settings.${{ inputs.deployment-target }}
       shell: bash
           
     - name: Update site with Zappa
       run: |
+        cd wagtail/${{ inputs.project-name }}
         source env/bin/activate
         zappa update ${{ inputs.deployment-target }}
       shell: bash
@@ -95,6 +98,7 @@ runs:
     - name: Migrate database
       if: success() || failure()
       run: |
+        cd wagtail/${{ inputs.project-name }}
         source env/bin/activate
         zappa manage ${{ inputs.deployment-target }} migrate
       shell: bash
