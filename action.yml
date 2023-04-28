@@ -35,13 +35,13 @@ runs:
   using: "composite"
   steps:
     - name: Setup Node
-      if: inputs.uses-tailwind!='false' || elm-paths!=''
+      if: inputs.uses-tailwind!='false' || inputs.elm-paths!=''
       uses: actions/setup-node@v3
       with:
         node-version: '16'
     
     - name:  Install and Compile Production Elm
-      if: elm-paths!=''
+      if: inputs.elm-paths!=''
       uses: Funbit-AS/gha-compile-elm@v1
       with:
         github-workspace: ${{ github.workspace }}
