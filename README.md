@@ -2,6 +2,7 @@
 A custom GitHub Action will deploy a Wagtail project to AWS Lambda
 
 ## Usage
+The major tag version does not need to be changed.
 The custom action will take the following inputs:
 - `project-name `: name of the project
 - `deployment-target `: either `staging` or `production`
@@ -14,13 +15,14 @@ The custom action will take the following inputs:
 
 ## Example Usage
 
+        ...
 
         steps:
         - name: Checkout
             uses: actions/checkout@v3
         
         - name: Custom Deploy Action
-            uses: Funbit-AS/gha-deploy-wagtail-ec2@v1
+            uses: Funbit-AS/gha-deploy-wagtail-zappa@v1
             with:
                 project-name: funbitno
                 deployment-target: staging
@@ -29,3 +31,7 @@ The custom action will take the following inputs:
                 django-secret-key: ${{ secrets.DJANGO_SECRET_KEY }}
                 uses-tailwind: True
                 elm-paths: /wagtail/funbitno/projects/elm
+
+## Release New Version
+- Simply create a new version in the Github repository.
+- The major tag (`v1`) will update automatically once the a new release has been created
