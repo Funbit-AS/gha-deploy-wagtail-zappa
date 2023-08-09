@@ -17,6 +17,10 @@ inputs:
   django-secret-key:
     description: ""
     required: True
+  python-version:
+    description: "Optional. Version of Python. Defaults to 3.10"
+    required: false
+    default: "3.10"
   uses-tailwind:
     description: "Does the project use Tailwind"
     required: false
@@ -65,7 +69,7 @@ runs:
       
     - uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: ${{ inputs.python-version }}
         cache: "pip"
         cache-dependency-path: |
           **/requirements/common.txt
